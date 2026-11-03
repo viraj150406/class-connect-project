@@ -19,9 +19,7 @@ stages {
                     set -eu
                     cp "$BACKEND_ENV_FILE" backend/.env
                     trap 'rm -f backend/.env' EXIT
-                    echo "Removing old containers..."
                     docker rm -f classconnect-backend classconnect-frontend || true
-                    echo "Deploying ClassConnect..."
                     docker-compose -f docker-compose.yml up -d --build --remove-orphans
                 '''
             }
@@ -30,22 +28,33 @@ stages {
     stage('Verify Deployment') {
         steps {
             sh '''
-                echo "Checking containers..."
-                docker ps
-                echo "Checking backend..."
-                curl -f http://localhost:5001/api/health
+                set -eu
+                echo "Waiting for backend..."
+                for i in $(seq 1 30); do
+                    if curl -fsS http://localhost:5001/api/health; then
+                        echo "Backend is healthy!"
+                        break
+                    fi
+                    if [ "$i" -eq 30 ]; then
+                        echo "Backend health check failed!"
+                        docker logs --tail 100 classconnect-backend
+                        exit 1
+                    fi
+                    sleep 2
+                done
                 echo "Checking frontend..."
-                curl -f http://localhost:5173
+                curl -fsS http://localhost:5173 > /dev/null
+                echo "Frontend is healthy!"
             '''
         }
     }
 }
 post {
     success {
-        echo 'ClassConnect deployed successfully!'
+        echo 'ClassConnect CI/CD deployment successful!'
     }
     failure {
-        echo 'Deployment failed. Check Console Output.'
+        echo 'ClassConnect deployment failed!'
     }
 }
 
