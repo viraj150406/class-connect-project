@@ -5,3 +5,9 @@ dist/
 build/
 coverage/
 
+
+# Terraform cache and state
+.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*
