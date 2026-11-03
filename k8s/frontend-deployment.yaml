@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: classconnect-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: classconnect-frontend
+  template:
+    metadata:
+      labels:
+        app: classconnect-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: classconnect-frontend:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
